@@ -73,15 +73,6 @@ nnoremap <F2> :execute "set cc=" . (&cc == "" ? "80" : "") <CR>
 let @p='istd::cout << '
 let @n='A << ''\n'';jkV>'
 
-"fun! ToggleCC()
-"    if &cc=''
-"        set cc=80
-"    else
-"        set cc=
-"    endif
-"endfun
-"nnoremap <F2> :call ToggleCC()<CR>
-
 nmap <S-Enter> Ojkj
 nmap <CR> ojkk
 
