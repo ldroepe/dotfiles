@@ -7,7 +7,7 @@ set tabstop=4 " spaces/TAB when writing a file
 set softtabstop=4 " spaces when WRITING a tab
 set expandtab " TAB = put 4 spaces instead of \t
 set shiftwidth=4 " indent by 4
-set autoindent
+set autoindent " auto ident
 
 set number relativenumber " line numbers
 set showmatch " highlight matching [{()}]
@@ -21,6 +21,9 @@ nnoremap ,<space> :nohlsearch<CR>
 " gotta go fast
 nnoremap B ^
 nnoremap E $
+nnoremap ^ <nop>
+nnoremap $ <nop>
+
 nnoremap J 5j
 nnoremap K 5k
 
@@ -45,13 +48,13 @@ set wildmenu
 "hs = horizontal split. Easier to remember
 cnoreabbrev <expr> hs ((getcmdtype() is# ':' && getcmdline() is# 'hs')?('sp'):('hs'))
 
-" save window buffers
-nnoremap ,s :mksession<CR>
+"save window buffers
+nnoremap ,s :mksession!<CR>
 
-" shortcut to vimrc
+"shortcut to edit vimrc
 nnoremap ,rc :vsp ~/.vimrc<CR>
 
-" fix backspace
+"make backspace behave properly
 set backspace=indent,start,eol
 
 " 80 character reminder
@@ -85,6 +88,10 @@ cnoreabbrev <expr> windo ((getcmdtype() is# ':' && getcmdline() is# 'windo')?('W
 let @p='istd::cout << '
 let @n='A << ''\n'';jkV>'
 
+nnoremap <F2> :execute "set cc=" . (&cc == "" ? "80" : "") <CR>
+
+nmap <S-Enter> Ojkj
+nmap <CR> ojkk
 
 " makes working with tabs easier
 nnoremap ,1 1gt
@@ -104,6 +111,7 @@ nnoremap ,o :only<CR>
 nmap <S-Enter> Ojkj
 nmap <CR> ojkk
 
+" toggle cursorline
 fun! ToggleCursorline()
 
     if &cursorline == 1
@@ -114,6 +122,7 @@ fun! ToggleCursorline()
 endfun
 nnoremap <F3> :call ToggleCursorline()<CR>
 
+" move to end of line or beginning of line while in insert mode
 inoremap <C-e> <C-o>$
 inoremap <C-b> <C-o>^
 
