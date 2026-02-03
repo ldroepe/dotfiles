@@ -1,0 +1,26 @@
+#################50 CHARACTERS###################
+#<type>!?[(optional scope)]: <description>
+
+#################72 CHARACTERS##########################################
+
+
+
+# Footer
+
+# Possible types:
+# [fix,feat,build,chore,ci,docs,style,refactor,perf,test,revert]
+# Possible Footer types:
+# [Refs,reviewed-by]
+#
+# Footers:
+# Include references to any other relevant pieces of info (SPRs, other commits,
+# etc).
+#
+# Breaking changes:
+# Append a `!` to the type
+# In the footer of the commit, include `BREAKING CHANGE:` with a description
+# of what caused the breaking change
+#
+# Reverts:
+# Specify use the revert type, include commits that were reverted in the
+# Footer

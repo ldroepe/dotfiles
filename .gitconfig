@@ -1,0 +1,31 @@
+[user]
+    name = Luke Roepe
+[status]
+    showUntrackedFiles = all
+[diff]
+    tool = vimdiff
+[alias]
+    dt = difftool
+    glog = log --all --graph --decorate --oneline
+    glhead = glog -n 10
+    shown = show --name-only
+    conflicts = diff --name-only --diff-filter=U
+    ffetch = fetch --prune --tags --force
+    modified = !git status -s | grep -E \".M \" | awk '{print $NF}'
+    deleted = !git status -s | grep -E \".D \" | awk '{print $NF}'
+    wdiff = diff --word-diff
+[difftool]
+    prompt = false
+    trustExitCode = true
+[merge]
+    tool = vimdiff
+    conflictstyle = diff3
+[init]
+    defaultBranch = trunk
+[commit]
+    template = /user/lroepe/.gitmessage
+[log-compact]
+    defaults = --abbrev=8 --graph --decorate --graph
+
+[core]
+    excludesfile = /user/lroepe/.gitignore
