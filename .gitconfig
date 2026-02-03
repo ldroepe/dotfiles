@@ -24,8 +24,6 @@
     defaultBranch = trunk
 [commit]
     template = /user/lroepe/.gitmessage
-[log-compact]
-    defaults = --abbrev=8 --graph --decorate --graph
 
 [core]
     excludesfile = /user/lroepe/.gitignore
