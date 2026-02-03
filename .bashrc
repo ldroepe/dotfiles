@@ -1,80 +1,136 @@
-PATH=/usr/atria/bin:${PATH}
-export PATH
 
-alias ll='ls -latr'
-alias lt='ls -lArt'
+SECONDS_IN_WEEK=
+export GPS_UTC_EPOCH_OFFSET_SEC=315964800
+# accurate as of 2026
+export GPS_LEAP_SECOND_ADJUSTMENT_SEC=18
 
-alias ams='cd /cm_data/onewebams'
-alias common='cd /cm_data/onewebcommon'
-alias built='cd /cm_data/onewebams/Package/OW_AMS_8.8/bin/x86_64'
+alias lj="ls *.json"
 
-#Clearcase aliases
-alias ct='cleartool'
-alias dev='. ./.profile;cleartool setview lroepe_dev'
-alias dep='. ./.profile;cleartool setview lroepe_dep'
-alias lsco="cleartool lsco -me -rec -cview"
-alias pwv="cleartool pwv"
+touche() {
+    touch "$1"
+    chmod +x "$1"
 
-alias vip="vim -p"
-
+    if [[ $# -gt 1 ]]; then
+        local interpreter="$2"
+        echo "#!/usr/bin/env ${interpreter}" > "$1"
+    fi
+}
 
 # grep only .cpp & .h files
-cpp_grep() {
-
-    command='grep'
-
-    [[ $# -eq 0 ]] && echo "code_grep requires an argument" && return 1
-    [[ $# -gt 2 ]] && echo "code_grep takes only a search string and -i (optional)" && return 2
-
-    search_string=$1
-    if [[ $# -eq 2 ]]; then
-
-        if [[ $1 == "-i" ]]; then
-            
-            command="grep -i"
-            search_string=$2
-        else
-            echo "code_grep only takes one search string"
-            return 3
-        fi
-    fi
-
-
-    files=$(find . -path "./Package" -prune -o -name "*.cpp" -o -name "*.h")
-    $command "${search_string}" ${files}
+cppgrep() {
+    find . \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -exec grep "$@" {} +
 }
 
-# graphical cleartool diff of a file with a base label / the previous version
-cdiff() {
+# wrapper for calling `ls -ltr | cmd`
+# -n is the number of files to display (passed to `cmd`)
+# -p shows "pretty" output, which just displays the filename and no file info
+# for usage with e.g., grep, xargs, etc
+shortlist() {
+    local cmd="$1"
+    shift
 
-    command='cleartool diff -graphical'
+    local num_files=""
+    local pretty_cmd=""
 
-    [[ $# -ne 2 ]] && echo "cdiff <file> <base_label>/prev" && return 1
-    ! [[ $(ls $1 2>/dev/null) ]] && echo "$1 does not exist" && return 2
+    local POSITIONAL_ARGS=()
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -p|--pretty)
+                pretty_cmd='awk '\''{print $9}'\'
+                shift
+                ;;
+            -n)
+                num_files="-$2"
+                shift # flag
+                shift # value
+                ;;
+            *)
+                POSITIONAL_ARGS+=($1)
+                shift
+                ;;
+        esac
+    done
 
-    if [[ $2 == "prev" ]]; then
-        
-        command=$command" -predecessor"
-
-    else
-
-        inFile=$1"@@/main/"$2
-        
-        ! [[ $(ls ${inFile} 2>/dev/null) ]] && echo "${inFile} does not exist" && return 3
-
-        command="${command} ${inFile}"
-
-    fi
-
-    $command $1
-
-}
-
-# wrapper for ct find
-cfind() {
+    set -- "${POSITIONAL_ARGS[@]}"
     
-    [[ $# -eq 0 ]] && echo "cfind requires an argument (branch name)" && return 1
-    [[ $# -ge 2 ]] && echo "cfind only takes one argument (branch name)" && return 2
+    local target="."
+    [[ $# -gt 0 ]] && target="$@"
 
-    ct find . -type file -branch "brtype(${1})" -print
+    local ls_cmd="ls -ltr ${target}"
+    local display_cmd="${cmd} ${num_files}"
+
+    local full_cmd="${ls_cmd} | ${display_cmd}"
+    [[ -n "${pretty_cmd}" ]] && full_cmd="${full_cmd} | ${pretty_cmd}"
+
+    eval "$full_cmd"
+}
+
+ltail() {
+    shortlist "tail" $@
+}
+
+lhead() {
+    shortlist "head" $@
+}
+
+# convert a unix epoch timestamp to a datetime
+dates() {
+    date -d "@${1}"
+}
+
+# Convert the specified GPS timestamp to UTC time
+# By default, expects a GPS timestamp in seconds
+# specify -w to convert a GPS timestamp in WWWWSSSSSS format
+g2u() {
+
+    # convert WWWWSSSSSS format into UTC timestamp
+    if [[ $1 == "-w" ]]; then
+        shift;
+        local ws=${1:-$(read; echo $REPLY)}
+
+        local WEEK_OFFSET_IN_FORMAT=1000000
+        local weeks=$(( ws / WEEK_OFFSET_IN_FORMAT ))
+        local secs=$(( ws % WEEK_OFFSET_IN_FORMAT ))
+        local SECONDS_IN_WEEK=604800
+
+        t=$(( secs + weeks*SECONDS_IN_WEEK ))
+    # convert GPS seconds to UTC seconds
+    else
+        t=${1:-$(read; echo $REPLY)}
+    fi
+    local utc_sec=$(( t + GPS_UTC_EPOCH_OFFSET_SEC - GPS_LEAP_SECOND_ADJUSTMENT_SEC ))
+    local old_tz="$TZ"
+    TZ="UTC" date -d "@${utc_sec}"
+}
+
+u2g() {
+
+    local SECONDS_IN_WEEK=604800
+
+    # If nothing was specified, convert the current time
+    # For simplicity of argument wrangling, require
+    # u2g [-w] [date] syntax
+    local utc_now_sec=$(date +%s)
+    if [[ $# -eq 1 ]]; then
+        utc_now_sec="$1"
+        shift
+    elif [[ $# -gt 1 ]]; then
+        utc_now_sec="$2"
+    fi
+
+    local gps_now_sec=$(( utc_now_sec - GPS_UTC_EPOCH_OFFSET_SEC + GPS_LEAP_SECOND_ADJUSTMENT_SEC ))
+
+    if [[ $1 == "-w" ]]; then
+        local gps_weeks=$(( gps_now_sec / SECONDS_IN_WEEK ))
+        local gps_seconds=$(( gps_now_sec % SECONDS_IN_WEEK ))
+        echo "${gps_weeks}${gps_seconds}"
+    else
+        echo "${gps_now_sec}"
+    fi
+}
+
+swaps() {
+    cmd="-print"
+    [[ "$1" == "delete" ]] && cmd="-delete"
+    find . -type f -name "*.sw[po]" $cmd
 }
